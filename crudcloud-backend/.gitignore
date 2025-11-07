@@ -31,5 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
-application.properties
-application.yml
+
+# Ignorar configuración sensible
+src/main/resources/application.properties
+src/main/resources/application.yml
+
