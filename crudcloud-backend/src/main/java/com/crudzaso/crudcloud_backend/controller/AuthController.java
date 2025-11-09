@@ -26,6 +26,8 @@ public class AuthController {
         User savedUser = authService.register(user);
         return ResponseEntity.ok(savedUser);
     }
+
+    @Operation(summary = "Login a user")
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
