@@ -1,6 +1,8 @@
 package com.crudzaso.crudcloud_backend.model;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -35,4 +37,7 @@ public class Plan {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "plans", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UsersPlans> usersPlans = new HashSet<>();
 }
