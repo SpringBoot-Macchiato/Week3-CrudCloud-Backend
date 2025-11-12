@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  spring:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crudcloud_backend
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    expose:
+      - "8080"
+    restart: always
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    external: true
