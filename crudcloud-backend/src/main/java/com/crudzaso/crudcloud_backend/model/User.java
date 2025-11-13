@@ -1,5 +1,8 @@
 package com.crudzaso.crudcloud_backend.model;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,4 +29,8 @@ public class User {
 
     @Column(nullable = false)
     private String fullName;
+
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UsersPlans> usersPlans = new HashSet<>();
 }
