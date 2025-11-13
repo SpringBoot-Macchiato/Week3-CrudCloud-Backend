@@ -10,7 +10,7 @@ import lombok.Data;
  * For Free plan, dbName may be null (backend will generate).
  */
 @Data
-public class InstanceCreateRequest {
+public class InstanceRequest {
 
     @NotNull(message = "engineId is required")
     private Long engineId; // e.g. id that references MySQL engine row
