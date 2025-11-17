@@ -17,19 +17,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    // Register
-    public User register(User user) {
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("The email address is already registered.");
-        }
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        if (user.getRole() == null)
-            user.setRole("USER");
-
-        return userRepository.save(user);
-    }
-
     // Login
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
@@ -43,5 +30,4 @@ public class AuthService {
 
         return new LoginResponse(token, user.getEmail(), user.getRole());
     }
-
 }

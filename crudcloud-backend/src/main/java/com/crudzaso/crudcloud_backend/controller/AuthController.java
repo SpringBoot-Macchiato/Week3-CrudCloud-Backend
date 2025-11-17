@@ -3,7 +3,6 @@ package com.crudzaso.crudcloud_backend.controller;
 
 import com.crudzaso.crudcloud_backend.dto.LoginRequest;
 import com.crudzaso.crudcloud_backend.dto.LoginResponse;
-import com.crudzaso.crudcloud_backend.model.User;
 import com.crudzaso.crudcloud_backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,18 +18,10 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @Operation(summary = "Register a new user")
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        User savedUser = authService.register(user);
-        return ResponseEntity.ok(savedUser);
-    }
-
     @Operation(summary = "Login a user")
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
-
 
 }

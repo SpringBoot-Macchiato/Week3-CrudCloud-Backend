@@ -1,6 +1,8 @@
 package com.crudzaso.crudcloud_backend.service;
 
 import com.crudzaso.crudcloud_backend.service.impl.MysqlDatabaseAdminService;
+import com.crudzaso.crudcloud_backend.service.impl.PostgresDatabaseAdminService;
+import com.crudzaso.crudcloud_backend.service.impl.SqlServerDatabaseAdminService;
 import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,10 +12,12 @@ public class EngineOrchestratorService implements DatabaseAdminService {
 
     private final Map<String, DatabaseAdminService> engines = new HashMap<>();
 
-    public EngineOrchestratorService(MysqlDatabaseAdminService mysqlService) {
+    public EngineOrchestratorService(MysqlDatabaseAdminService mysqlService,
+                                     PostgresDatabaseAdminService postgresService,
+                                     SqlServerDatabaseAdminService sqlServerService) {
         engines.put("MySQL", mysqlService);
-        // engines.put("PostgreSQL", postgresService);
-        // engines.put("SQLServer", sqlServerService);
+        engines.put("PostgreSQL", postgresService);
+        engines.put("SQLServer", sqlServerService);
     }
 
     private DatabaseAdminService getService(String engine) {

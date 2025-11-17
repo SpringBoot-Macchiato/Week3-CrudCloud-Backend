@@ -18,6 +18,6 @@ public interface UsersPlansRepository extends JpaRepository<UsersPlans, Long>{
     List<UsersPlans> findByStatus(String status);
 
     // Obtener todos los planes desactivados
-    List<UsersPlans> findByStatusNot(String status); // o "INACTIVE" si lo defines así
+    List<UsersPlans> findByStatusNot(String status);
 
 }

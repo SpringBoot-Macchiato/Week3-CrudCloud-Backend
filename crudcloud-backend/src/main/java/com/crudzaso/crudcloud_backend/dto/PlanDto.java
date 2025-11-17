@@ -1,18 +1,22 @@
 package com.crudzaso.crudcloud_backend.dto;
 
+import java.math.BigDecimal;
+
 public class PlanDto {
     private Long id;
     private String name;
     private int maxInstances;
     private String description;
     private String state;
+    private BigDecimal priceAmount;
 
-    public PlanDto(Long id, String name, int maxInstances, String description, String state) {
+    public PlanDto(Long id, String name, int maxInstances, String description, String state, BigDecimal priceAmount) {
         this.id = id;
         this.name = name;
         this.maxInstances = maxInstances;
         this.description = description;
         this.state = state;
+        this.priceAmount = priceAmount;
     }
 
     public Long getId() {
@@ -34,7 +38,10 @@ public class PlanDto {
     public String getState() {
         return state;
     }
-    
-    
-    
+
+    public BigDecimal getPriceAmount() {
+        return priceAmount;
+    }
+
+    public BigDecimal getPrice() { return priceAmount; }
 }
