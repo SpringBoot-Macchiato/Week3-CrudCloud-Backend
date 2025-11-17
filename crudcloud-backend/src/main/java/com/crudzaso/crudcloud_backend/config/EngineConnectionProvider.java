@@ -26,4 +26,14 @@ public class EngineConnectionProvider {
         if (jt == null) throw new IllegalArgumentException("Engine no configurado: " + name);
         return jt;
     }
+
+    public int getEnginePort(Long engineId) {
+        return switch (engineId.intValue()) {
+            case 1 -> 3306;   // MySQL
+            case 2 -> 5432;   // PostgreSQL
+            case 3 -> 1433;   // SQL Server
+            default -> throw new IllegalArgumentException("Engine ID no soportado: " + engineId);
+        };
+    }
 }
+

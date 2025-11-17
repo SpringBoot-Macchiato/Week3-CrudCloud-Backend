@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Plans", description = "Plan management endpoints")
 @RestController
 @RequestMapping("/api/plans")
 @CrossOrigin(origins = "")
@@ -23,6 +27,7 @@ public class PlanController {
     }
 
     // CREATE - Crear nuevo plan (Solo Admin)
+    @Operation(summary = "Create a new plan (ADMIN)")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PlanDto> createPlan(@RequestBody CreatePlanRequest request) {
@@ -31,18 +36,21 @@ public class PlanController {
     }
 
     // READ - Obtener todos los planes activos
+    @Operation(summary = "Get all active plans")
     @GetMapping
     public ResponseEntity<List<PlanDto>> getAllPlans() {
         return ResponseEntity.ok(planService.getAllPlans());
     }
 
     // READ - Obtener plan por ID
+    @Operation(summary = "Get plan by id")
     @GetMapping("/{id}")
     public ResponseEntity<PlanDto> getPlanById(@PathVariable Long id) {
         return ResponseEntity.ok(planService.getPlanById(id));
     }
 
     // UPDATE - Actualizar plan (Solo Admin)
+    @Operation(summary = "Update an existing plan (ADMIN)")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PlanDto> updatePlan(
@@ -53,6 +61,7 @@ public class PlanController {
     }
 
     // DELETE - Eliminar plan (Solo Admin)
+    @Operation(summary = "Delete a plan (ADMIN)")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletePlan(@PathVariable Long id) {

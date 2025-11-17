@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.Instant;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "instances")
 @Data
@@ -17,12 +19,25 @@ public class Instance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Owner of the instance
+    // Owner of the instance (FK -> users.id)
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    // Relation to User (read-only, uses the same column user_id)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @JsonIgnore
+    private User user;
+
+    // Engine FK (conceptual engine catalog)
     @Column(name = "engine_id", nullable = false)
     private Long engineId;
+
+    // Relation to Engine (read-only, uses the same column engine_id)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "engine_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @JsonIgnore
+    private Engine engine;
 
     @Column(name = "db_name", nullable = false)
     private String dbName;
@@ -39,8 +54,9 @@ public class Instance {
     @Column(name = "port")
     private Integer port;
 
+    // optional container relation omitted for now
     @Column(name = "container_id")
-    private String containerId; // optional if we use docker exec or keep empty
+    private String containerId;
 
     // possible values: CREATING, RUNNING, SUSPENDED, DELETED
     @Column(name = "state", nullable = false)

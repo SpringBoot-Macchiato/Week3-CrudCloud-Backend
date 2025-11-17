@@ -3,6 +3,7 @@ package com.crudzaso.crudcloud_backend.model;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.math.BigDecimal;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -25,9 +26,10 @@ public class Plan {
     @Column(name = "max_instances", nullable = false)
     private int maxInstances;
 
-    @Column(name = "price_id_mercadopago", nullable = false)
-    private int priceIdMercadoPago;
-    
+    @Column(name = "price_amount", precision = 12, scale = 2)
+    private BigDecimal priceAmount;
+
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
@@ -44,6 +46,10 @@ public class Plan {
     @JsonIgnore  // Evitar recursión infinita en JSON
     private Set<UsersPlans> usersPlans = new HashSet<>();
 
+    @Builder.Default
+    @Column(name = "duration_days")
+    private Integer durationDays = 30; // duración en días del plan (ambos planes: 30 días)
+
     // Método auxiliar para establecer timestamps automáticamente
     @PrePersist
     protected void onCreate() {
@@ -51,6 +57,9 @@ public class Plan {
         updatedAt = LocalDateTime.now();
         if (state == null) {
             state = "ACTIVE";
+        }
+        if (durationDays == null) {
+            durationDays = 30;
         }
     }
 

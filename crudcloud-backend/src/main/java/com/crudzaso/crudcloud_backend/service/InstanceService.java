@@ -4,6 +4,7 @@ import com.crudzaso.crudcloud_backend.dto.InstanceRequest;
 import com.crudzaso.crudcloud_backend.dto.InstanceResponse;
 import com.crudzaso.crudcloud_backend.model.Instance;
 import com.crudzaso.crudcloud_backend.repository.InstanceRepository;
+import com.crudzaso.crudcloud_backend.repository.UserRepository;
 import com.crudzaso.crudcloud_backend.util.AesGcmEncryptionUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +20,22 @@ public class InstanceService {
     private final InstanceRepository instanceRepository;
     private final DatabaseAdminService dbAdminService;
     private final AesGcmEncryptionUtil crypto;
+    private final com.crudzaso.crudcloud_backend.config.EngineConnectionProvider engineConnectionProvider;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
 
     public InstanceService(InstanceRepository instanceRepository,
                            EngineOrchestratorService dbAdminService,
-                           AesGcmEncryptionUtil crypto) {
+                           AesGcmEncryptionUtil crypto,
+                           com.crudzaso.crudcloud_backend.config.EngineConnectionProvider engineConnectionProvider,
+                           UserRepository userRepository,
+                           EmailService emailService) {
         this.instanceRepository = instanceRepository;
         this.dbAdminService = dbAdminService;
         this.crypto = crypto;
+        this.engineConnectionProvider = engineConnectionProvider;
+        this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -45,6 +55,8 @@ public class InstanceService {
 
         String plainPassword = generatePassword();
 
+        int port = engineConnectionProvider.getEnginePort(req.getEngineId());
+
         Instance inst = Instance.builder()
                 .userId(userId)
                 .engineId(req.getEngineId())
@@ -52,7 +64,7 @@ public class InstanceService {
                 .userDb(userDb)
                 .passwordEncrypted(crypto.encrypt(plainPassword))
                 .host("127.0.0.1")
-                .port(3306)
+                .port(port)
                 .state("CREATING")
                 .passwordShown(false)
                 .createdAt(Instant.now())
@@ -71,6 +83,11 @@ public class InstanceService {
             saved.setUpdatedAt(Instant.now());
             instanceRepository.save(saved);
 
+            // Send email notification after successful creation
+            userRepository.findById(userId).ifPresent(u -> {
+                emailService.sendInstanceCreatedEmail(u.getEmail(), engineName, saved, plainPassword);
+            });
+
             InstanceResponse resp = mapToResponse(saved);
             resp.setPassword(plainPassword);
             return resp;
@@ -85,7 +102,7 @@ public class InstanceService {
 
     public List<InstanceResponse> listInstancesForUser(Long userId) {
         return instanceRepository.findByUserIdAndStateNot(userId, "DELETED")
-                .stream().map(this::mapToResponse).collect(Collectors.toList());
+                .stream().map(this::mapToResponse).collect(java.util.stream.Collectors.toList());
     }
 
     public InstanceResponse getInstance(Long id, Long userId) {
@@ -139,6 +156,11 @@ public class InstanceService {
         inst.setPasswordShown(true);
         inst.setUpdatedAt(Instant.now());
         instanceRepository.save(inst);
+
+        // Send email notification for password rotation
+        userRepository.findById(userId).ifPresent(u -> {
+            emailService.sendPasswordRotatedEmail(u.getEmail(), engine, inst, newPass);
+        });
 
         return newPass;
     }

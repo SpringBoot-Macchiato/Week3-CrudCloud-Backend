@@ -7,6 +7,7 @@ import com.crudzaso.crudcloud_backend.model.Plan;
 import com.crudzaso.crudcloud_backend.repository.PlanRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class PlanService {
         Plan plan = Plan.builder()
                 .name(request.getName())
                 .maxInstances(request.getMaxInstances())
-                .priceIdMercadoPago(request.getPriceIdMercadoPago())
+                .priceAmount(request.getPriceAmount() != null ? request.getPriceAmount() : BigDecimal.ZERO)
                 .description(request.getDescription())
                 .state(request.getState() != null ? request.getState() : "ACTIVE")
                 .createdAt(LocalDateTime.now())
@@ -61,8 +62,9 @@ public class PlanService {
         if (request.getMaxInstances() != null) {
             plan.setMaxInstances(request.getMaxInstances());
         }
-        if (request.getPriceIdMercadoPago() != null) {
-            plan.setPriceIdMercadoPago(request.getPriceIdMercadoPago());
+
+        if (request.getPriceAmount() != null) {
+            plan.setPriceAmount(request.getPriceAmount());
         }
         if (request.getDescription() != null) {
             plan.setDescription(request.getDescription());
@@ -91,7 +93,8 @@ public class PlanService {
                 plan.getName(),
                 plan.getMaxInstances(),
                 plan.getDescription(),
-                plan.getState()
+                plan.getState(),
+                plan.getPriceAmount() // sexto parámetro requerido por PlanDto
         );
     }
 }
