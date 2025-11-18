@@ -40,7 +40,7 @@ public class UserService {
 
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
     }
 
     public List<User> findAll() {
@@ -49,15 +49,15 @@ public class UserService {
 
     public User findById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
     }
 
     public User register(User user) {
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("The email address is already registered.");
+            throw new IllegalArgumentException("The email address is already registered.");
         }
         if (user.getPassword() == null || user.getPassword().isBlank()) {
-            throw new RuntimeException("Password is required.");
+            throw new IllegalArgumentException("Password is required.");
         }
 
         // Store plain password temporarily for email
@@ -71,7 +71,7 @@ public class UserService {
 
         // Auto-assign FREE plan (id=3) ACTIVE for 30 days
         Plan freePlan = planRepository.findByIdAndState(3L, "ACTIVE")
-                .orElseThrow(() -> new RuntimeException("Free plan (id=3) not found or inactive"));
+                .orElseThrow(() -> new IllegalStateException("Free plan (id=3) not found or inactive"));
 
         Date now = new Date();
         Date end = new Date(now.getTime() + 30L * 24 * 60 * 60 * 1000); // +30 days
