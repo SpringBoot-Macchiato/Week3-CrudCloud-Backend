@@ -6,6 +6,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.crudzaso.crudcloud_backend.repository.PlanRepository;
+import com.crudzaso.crudcloud_backend.repository.UsersPlansRepository;
+import com.crudzaso.crudcloud_backend.model.UsersPlans;
+import com.crudzaso.crudcloud_backend.model.Plan;
+import java.util.Date;
 
 @Service
 public class UserService {
@@ -13,11 +18,20 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    // New repositories to auto-assign FREE plan
+    private final PlanRepository planRepository;
+    private final UsersPlansRepository usersPlansRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       EmailService emailService,
+                       PlanRepository planRepository,
+                       UsersPlansRepository usersPlansRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.planRepository = planRepository;
+        this.usersPlansRepository = usersPlansRepository;
     }
 
     public User findByEmail(String email) {
@@ -50,6 +64,22 @@ public class UserService {
         if (!user.isEnable()) user.setEnable(false);
 
         User savedUser = userRepository.save(user);
+
+        // Auto-assign FREE plan (id=3) ACTIVE for 30 days
+        Plan freePlan = planRepository.findByIdAndState(3L, "ACTIVE")
+                .orElseThrow(() -> new RuntimeException("Free plan (id=3) not found or inactive"));
+
+        Date now = new Date();
+        Date end = new Date(now.getTime() + 30L * 24 * 60 * 60 * 1000); // +30 days
+
+        UsersPlans up = UsersPlans.builder()
+                .user(savedUser)
+                .plan(freePlan)
+                .status("ACTIVE")
+                .startDate(now)
+                .endDate(end)
+                .build();
+        usersPlansRepository.save(up);
 
         // Send welcome email with credentials
         try {

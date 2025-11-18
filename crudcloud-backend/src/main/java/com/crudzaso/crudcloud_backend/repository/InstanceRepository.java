@@ -8,4 +8,7 @@ import java.util.List;
 public interface InstanceRepository extends JpaRepository<Instance, Long> {
     List<Instance> findByUserIdAndStateNot(Long userId, String excludedState);
     long countByUserIdAndState(Long userId, String state);
+    boolean existsByEngineIdAndDbNameIgnoreCaseAndUserDbIgnoreCase(Long engineId, String dbName, String userDb);
+    boolean existsByEngineIdAndDbNameIgnoreCase(Long engineId, String dbName);
+    boolean existsByEngineIdAndUserDbIgnoreCase(Long engineId, String userDb);
 }
