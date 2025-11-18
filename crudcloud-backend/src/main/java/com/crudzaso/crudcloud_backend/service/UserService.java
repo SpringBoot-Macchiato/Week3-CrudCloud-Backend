@@ -21,17 +21,21 @@ public class UserService {
     // New repositories to auto-assign FREE plan
     private final PlanRepository planRepository;
     private final UsersPlansRepository usersPlansRepository;
+    // Discord notification service
+    private final DiscordNotificationService discordNotificationService;
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        EmailService emailService,
                        PlanRepository planRepository,
-                       UsersPlansRepository usersPlansRepository) {
+                       UsersPlansRepository usersPlansRepository,
+                       DiscordNotificationService discordNotificationService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.planRepository = planRepository;
         this.usersPlansRepository = usersPlansRepository;
+        this.discordNotificationService = discordNotificationService;
     }
 
     public User findByEmail(String email) {
@@ -87,6 +91,18 @@ public class UserService {
         } catch (Exception e) {
             // Don't break registration if email fails
             System.err.println("Failed to send welcome email to " + savedUser.getEmail() + ": " + e.getMessage());
+        }
+
+        // Send Discord notification
+        try {
+            discordNotificationService.sendUserRegistrationNotification(
+                    savedUser.getEmail(),
+                    savedUser.getFullName(),
+                    savedUser.getRole()
+            );
+        } catch (Exception e) {
+            // Don't break registration if Discord notification fails
+            System.err.println("Failed to send Discord notification: " + e.getMessage());
         }
 
         return savedUser;
