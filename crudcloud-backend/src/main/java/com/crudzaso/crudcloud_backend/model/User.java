@@ -28,8 +28,7 @@ public class User {
     private String email;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @NotBlank(message = "Password is required")
-    @Column(nullable = false)
+    @Column(nullable = true) // Nullable para usuarios de Google (sin password)
     private String password;
 
     @Column(nullable = false)
@@ -42,6 +41,16 @@ public class User {
     @Builder.Default
     @Column(nullable = false)
     private boolean enable = true;
+
+    // Campos para autenticación con Google
+    @Column(unique = true)
+    private String googleId;
+
+    @Column
+    private String provider; // "LOCAL", "GOOGLE"
+
+    @Column
+    private String picture; // URL de la foto de perfil de Google
 
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
