@@ -13,11 +13,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final DiscordNotificationService discordNotificationService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
+    public UserService(UserRepository userRepository, 
+                      PasswordEncoder passwordEncoder, 
+                      EmailService emailService,
+                      DiscordNotificationService discordNotificationService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.discordNotificationService = discordNotificationService;
     }
 
     public User findByEmail(String email) {
@@ -57,6 +62,18 @@ public class UserService {
         } catch (Exception e) {
             // Don't break registration if email fails
             System.err.println("Failed to send welcome email to " + savedUser.getEmail() + ": " + e.getMessage());
+        }
+
+        // 🆕 Send Discord notification
+        try {
+            discordNotificationService.sendUserRegistrationNotification(
+                savedUser.getEmail(), 
+                savedUser.getFullName(), 
+                savedUser.getRole()
+            );
+        } catch (Exception e) {
+            // Don't break registration if Discord notification fails
+            System.err.println("Failed to send Discord notification: " + e.getMessage());
         }
 
         return savedUser;
