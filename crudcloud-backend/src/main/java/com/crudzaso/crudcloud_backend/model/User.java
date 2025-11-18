@@ -18,7 +18,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true) // Nullable para usuarios de Google (sin password)
     private String password;
 
     @Column(nullable = false)
@@ -26,4 +26,14 @@ public class User {
 
     @Column(nullable = false)
     private String fullName;
+
+    // Campos para autenticación con Google
+    @Column(unique = true)
+    private String googleId;
+
+    @Column
+    private String provider; // "LOCAL", "GOOGLE"
+
+    @Column
+    private String picture; // URL de la foto de perfil de Google
 }
