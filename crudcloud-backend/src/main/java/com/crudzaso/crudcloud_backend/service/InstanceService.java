@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class InstanceService {
@@ -53,17 +52,30 @@ public class InstanceService {
                 ? "u_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10)
                 : req.getUserDb();
 
-        String plainPassword = generatePassword();
+        Long engineId = req.getEngineId();
 
-        int port = engineConnectionProvider.getEnginePort(req.getEngineId());
+        // Validación combinada (ambos ya existen como par)
+        if (instanceRepository.existsByEngineIdAndDbNameIgnoreCaseAndUserDbIgnoreCase(engineId, dbName, userDb)) {
+            throw new IllegalArgumentException("Database name and user already exist together for this engine");
+        }
+        // Validaciones separadas
+        if (instanceRepository.existsByEngineIdAndDbNameIgnoreCase(engineId, dbName)) {
+            throw new IllegalArgumentException("Database name already exists for this engine");
+        }
+        if (instanceRepository.existsByEngineIdAndUserDbIgnoreCase(engineId, userDb)) {
+            throw new IllegalArgumentException("Database user already exists for this engine");
+        }
+
+        String plainPassword = generatePassword();
+        int port = engineConnectionProvider.getEnginePort(engineId);
 
         Instance inst = Instance.builder()
                 .userId(userId)
-                .engineId(req.getEngineId())
+                .engineId(engineId)
                 .dbName(dbName)
                 .userDb(userDb)
                 .passwordEncrypted(crypto.encrypt(plainPassword))
-                .host("127.0.0.1")
+                .host("91.98.233.26")
                 .port(port)
                 .state("CREATING")
                 .passwordShown(false)
@@ -73,9 +85,7 @@ public class InstanceService {
         Instance saved = instanceRepository.save(inst);
 
         try {
-            Long engineId = req.getEngineId();
             String engineName = getEngineName(engineId);
-
             dbAdminService.createDatabaseAndUser(engineName, dbName, userDb, plainPassword);
 
             saved.setState("RUNNING");
@@ -83,15 +93,13 @@ public class InstanceService {
             saved.setUpdatedAt(Instant.now());
             instanceRepository.save(saved);
 
-            // Send email notification after successful creation
-            userRepository.findById(userId).ifPresent(u -> {
-                emailService.sendInstanceCreatedEmail(u.getEmail(), engineName, saved, plainPassword);
-            });
+            userRepository.findById(userId).ifPresent(u ->
+                    emailService.sendInstanceCreatedEmail(u.getEmail(), engineName, saved, plainPassword)
+            );
 
             InstanceResponse resp = mapToResponse(saved);
             resp.setPassword(plainPassword);
             return resp;
-
         } catch (Exception ex) {
             saved.setState("DELETED");
             saved.setUpdatedAt(Instant.now());
@@ -102,7 +110,7 @@ public class InstanceService {
 
     public List<InstanceResponse> listInstancesForUser(Long userId) {
         return instanceRepository.findByUserIdAndStateNot(userId, "DELETED")
-                .stream().map(this::mapToResponse).collect(java.util.stream.Collectors.toList());
+                .stream().map(this::mapToResponse).toList();
     }
 
     public InstanceResponse getInstance(Long id, Long userId) {
@@ -157,10 +165,9 @@ public class InstanceService {
         inst.setUpdatedAt(Instant.now());
         instanceRepository.save(inst);
 
-        // Send email notification for password rotation
-        userRepository.findById(userId).ifPresent(u -> {
-            emailService.sendPasswordRotatedEmail(u.getEmail(), engine, inst, newPass);
-        });
+        userRepository.findById(userId).ifPresent(u ->
+                emailService.sendPasswordRotatedEmail(u.getEmail(), engine, inst, newPass)
+        );
 
         return newPass;
     }

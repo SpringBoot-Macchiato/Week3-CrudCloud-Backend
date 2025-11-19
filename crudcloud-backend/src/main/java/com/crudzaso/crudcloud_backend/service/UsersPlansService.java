@@ -31,11 +31,11 @@ public class UsersPlansService {
     public UsersPlanDto createUserPlan(CreateUsersPlanRequest request) {
         // Validar que el usuario existe
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + request.getUserId()));
 
         // Validar que el plan existe
         Plan plan = planRepository.findById(request.getPlanId())
-                .orElseThrow(() -> new RuntimeException("Plan not found with id: " + request.getPlanId()));
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found with id: " + request.getPlanId()));
 
         // Crear la relación
         UsersPlans usersPlan = UsersPlans.builder()

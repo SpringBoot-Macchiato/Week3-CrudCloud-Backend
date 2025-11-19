@@ -47,14 +47,14 @@ public class PlanService {
     // READ - Plan por ID
     public PlanDto getPlanById(Long id) {
         Plan plan = planRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Plan not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found with id: " + id));
         return convertToDTO(plan);
     }
 
     // UPDATE
     public PlanDto updatePlan(Long id, UpdatePlanRequest request) {
         Plan plan = planRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Plan not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found with id: " + id));
 
         if (request.getName() != null) {
             plan.setName(request.getName());
@@ -81,7 +81,7 @@ public class PlanService {
     // DELETE
     public void deletePlan(Long id) {
         if (!planRepository.existsById(id)) {
-            throw new RuntimeException("Plan not found with id: " + id);
+            throw new IllegalArgumentException("Plan not found with id: " + id);
         }
         planRepository.deleteById(id);
     }

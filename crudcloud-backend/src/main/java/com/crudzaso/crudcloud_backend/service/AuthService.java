@@ -37,7 +37,7 @@ public class AuthService {
     // Login
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         // Check if user is a Google user (no password)
         if (user.getPassword() == null || "GOOGLE".equals(user.getProvider())) {
@@ -45,7 +45,7 @@ public class AuthService {
         }
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Password is incorrect");
+            throw new IllegalArgumentException("Password is incorrect");
         }
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
