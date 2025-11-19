@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import com.crudzaso.crudcloud_backend.repository.UsersPlansRepository;
+import com.crudzaso.crudcloud_backend.model.UsersPlans;
 
 @Service
 public class InstanceService {
@@ -22,19 +24,22 @@ public class InstanceService {
     private final com.crudzaso.crudcloud_backend.config.EngineConnectionProvider engineConnectionProvider;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final UsersPlansRepository usersPlansRepository; // nuevo repositorio para obtener plan activo
 
     public InstanceService(InstanceRepository instanceRepository,
                            EngineOrchestratorService dbAdminService,
                            AesGcmEncryptionUtil crypto,
                            com.crudzaso.crudcloud_backend.config.EngineConnectionProvider engineConnectionProvider,
                            UserRepository userRepository,
-                           EmailService emailService) {
+                           EmailService emailService,
+                           UsersPlansRepository usersPlansRepository) { // añadir parámetro
         this.instanceRepository = instanceRepository;
         this.dbAdminService = dbAdminService;
         this.crypto = crypto;
         this.engineConnectionProvider = engineConnectionProvider;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.usersPlansRepository = usersPlansRepository; // asignar
     }
 
     @Transactional
@@ -54,11 +59,9 @@ public class InstanceService {
 
         Long engineId = req.getEngineId();
 
-        // Validación combinada (ambos ya existen como par)
         if (instanceRepository.existsByEngineIdAndDbNameIgnoreCaseAndUserDbIgnoreCase(engineId, dbName, userDb)) {
             throw new IllegalArgumentException("Database name and user already exist together for this engine");
         }
-        // Validaciones separadas
         if (instanceRepository.existsByEngineIdAndDbNameIgnoreCase(engineId, dbName)) {
             throw new IllegalArgumentException("Database name already exists for this engine");
         }
@@ -142,6 +145,12 @@ public class InstanceService {
         if (!inst.getUserId().equals(userId)) throw new SecurityException("Access denied");
         if (!"SUSPENDED".equals(inst.getState())) throw new IllegalStateException("Instance not suspended");
 
+        int planMaxInstances = getActivePlanMaxInstances(userId);
+        long runningCount = instanceRepository.countByUserIdAndState(userId, "RUNNING");
+        if (runningCount >= planMaxInstances) {
+            throw new IllegalStateException("Plan instance limit reached");
+        }
+
         String engine = getEngineName(inst.getEngineId());
         dbAdminService.unlockUser(engine, inst.getUserDb());
 
@@ -213,5 +222,17 @@ public class InstanceService {
             case 3 -> "SQLServer";
             default -> throw new IllegalArgumentException("Unsupported engine: " + engineId);
         };
+    }
+
+    // Helper para obtener el mayor maxInstances de los planes activos del usuario
+    private int getActivePlanMaxInstances(Long userId) {
+        List<UsersPlans> active = usersPlansRepository.findByUserIdAndStatus(userId, "ACTIVE");
+        if (active.isEmpty()) {
+            throw new IllegalStateException("User has no active plan");
+        }
+        return active.stream()
+                .mapToInt(up -> up.getPlan().getMaxInstances())
+                .max()
+                .orElse(0);
     }
 }
