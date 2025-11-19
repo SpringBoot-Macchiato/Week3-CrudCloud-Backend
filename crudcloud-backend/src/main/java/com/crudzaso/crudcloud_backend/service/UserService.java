@@ -4,6 +4,8 @@ import com.crudzaso.crudcloud_backend.model.User;
 import com.crudzaso.crudcloud_backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import com.crudzaso.crudcloud_backend.repository.PlanRepository;
@@ -14,6 +16,8 @@ import java.util.Date;
 
 @Service
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -90,19 +94,21 @@ public class UserService {
             emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName(), plainPassword);
         } catch (Exception e) {
             // Don't break registration if email fails
-            System.err.println("Failed to send welcome email to " + savedUser.getEmail() + ": " + e.getMessage());
+            log.error("Failed to send welcome email to {}: {}", savedUser.getEmail(), e.getMessage(), e);
         }
 
         // Send Discord notification
         try {
+            log.info("Calling Discord notification service for user: {}", savedUser.getEmail());
             discordNotificationService.sendUserRegistrationNotification(
                     savedUser.getEmail(),
                     savedUser.getFullName(),
                     savedUser.getRole()
             );
+            log.info("Discord notification call completed");
         } catch (Exception e) {
             // Don't break registration if Discord notification fails
-            System.err.println("Failed to send Discord notification: " + e.getMessage());
+            log.error("Failed to send Discord notification: {}", e.getMessage(), e);
         }
 
         return savedUser;

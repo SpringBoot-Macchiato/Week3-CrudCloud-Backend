@@ -36,8 +36,13 @@ public class DiscordNotificationService {
      * Envía una notificación a Discord cuando un usuario se registra.
      */
     public void sendUserRegistrationNotification(String email, String fullName, String role) {
+        log.info("=== Attempting Discord Notification ===");
+        log.info("Notifications enabled: {}", notificationsEnabled);
+        log.info("Webhook URL present: {}", webhookUrl != null && !webhookUrl.isBlank());
+
         if (!notificationsEnabled || webhookUrl == null || webhookUrl.isBlank()) {
-            log.debug("Discord notifications are disabled or webhook URL not configured");
+            log.warn("Discord notifications SKIPPED - Enabled: {}, URL configured: {}",
+                    notificationsEnabled, webhookUrl != null && !webhookUrl.isBlank());
             return;
         }
 
