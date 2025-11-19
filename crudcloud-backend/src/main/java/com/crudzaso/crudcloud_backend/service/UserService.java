@@ -69,6 +69,7 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (user.getRole() == null) user.setRole("USER");
+        if (user.getProvider() == null) user.setProvider("LOCAL");
         if (!user.isEnable()) user.setEnable(false);
 
         User savedUser = userRepository.save(user);
@@ -97,18 +98,22 @@ public class UserService {
             log.error("Failed to send welcome email to {}: {}", savedUser.getEmail(), e.getMessage(), e);
         }
 
-        // Send Discord notification
-        try {
-            log.info("Calling Discord notification service for user: {}", savedUser.getEmail());
-            discordNotificationService.sendUserRegistrationNotification(
-                    savedUser.getEmail(),
-                    savedUser.getFullName(),
-                    savedUser.getRole()
-            );
-            log.info("Discord notification call completed");
-        } catch (Exception e) {
-            // Don't break registration if Discord notification fails
-            log.error("Failed to send Discord notification: {}", e.getMessage(), e);
+        // Send Discord notification ONLY for LOCAL registrations (not OAuth)
+        if ("LOCAL".equals(savedUser.getProvider()) || savedUser.getProvider() == null) {
+            try {
+                log.info("Calling Discord notification service for LOCAL user: {}", savedUser.getEmail());
+                discordNotificationService.sendUserRegistrationNotification(
+                        savedUser.getEmail(),
+                        savedUser.getFullName(),
+                        savedUser.getRole()
+                );
+                log.info("Discord notification call completed");
+            } catch (Exception e) {
+                // Don't break registration if Discord notification fails
+                log.error("Failed to send Discord notification: {}", e.getMessage(), e);
+            }
+        } else {
+            log.info("Skipping Discord notification for OAuth user (provider: {})", savedUser.getProvider());
         }
 
         return savedUser;

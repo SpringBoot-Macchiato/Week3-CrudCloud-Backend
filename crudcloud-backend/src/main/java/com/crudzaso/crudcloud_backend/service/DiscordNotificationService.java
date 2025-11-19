@@ -20,10 +20,10 @@ public class DiscordNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(DiscordNotificationService.class);
 
-    @Value("${discord.webhook.url:}")
+    @Value("${app.discord.webhook.url:}")
     private String webhookUrl;
 
-    @Value("${discord.notifications.enabled:false}")
+    @Value("${app.discord.enabled:false}")
     private boolean notificationsEnabled;
 
     private final RestTemplate restTemplate;
