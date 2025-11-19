@@ -10,6 +10,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +21,11 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class GoogleAuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(GoogleAuthService.class);
+
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final DiscordNotificationService discordNotificationService;
 
     @Value("${google.client-id}")
     private String googleClientId;
@@ -43,7 +48,7 @@ public class GoogleAuthService {
             // Generar JWT
             String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
-            return new LoginResponse(token, user.getEmail(), user.getRole());
+            return new LoginResponse(token, user.getId(), user.getEmail(), user.getFullName(), user.getRole());
 
         } catch (Exception e) {
             throw new RuntimeException("Error authenticating with Google: " + e.getMessage(), e);
@@ -118,9 +123,25 @@ public class GoogleAuthService {
                 .picture(googleUserInfo.getPicture())
                 .role("USER") // Por defecto es USER
                 .password(null) // No tiene password local
+                .enable(true) // Usuarios de Google están verificados
                 .build();
 
-        return userRepository.save(newUser);
+        User savedUser = userRepository.save(newUser);
+
+        // Send Discord notification for new Google user registration
+        try {
+            log.info("Sending Discord notification for new Google user: {}", savedUser.getEmail());
+            discordNotificationService.sendUserRegistrationNotification(
+                    savedUser.getEmail(),
+                    savedUser.getFullName(),
+                    savedUser.getRole()
+            );
+            log.info("Discord notification sent successfully for Google user: {}", savedUser.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send Discord notification for Google user: {}", e.getMessage(), e);
+        }
+
+        return savedUser;
     }
 
     /**
