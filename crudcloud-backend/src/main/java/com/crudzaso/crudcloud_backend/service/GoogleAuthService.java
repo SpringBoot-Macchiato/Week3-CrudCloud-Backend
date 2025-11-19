@@ -13,9 +13,11 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class GoogleAuthService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final DiscordNotificationService discordNotificationService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${google.client-id}")
     private String googleClientId;
@@ -115,6 +118,10 @@ public class GoogleAuthService {
      * Crea un nuevo usuario con autenticación de Google
      */
     private User createNewGoogleUser(GoogleUserInfo googleUserInfo) {
+        // Generar password aleatorio imposible de adivinar para usuarios OAuth
+        // Esto mantiene la integridad NOT NULL de la BD sin comprometer seguridad
+        String randomPassword = "OAUTH_GOOGLE_" + UUID.randomUUID().toString();
+
         User newUser = User.builder()
                 .email(googleUserInfo.getEmail())
                 .fullName(googleUserInfo.getName())
@@ -122,7 +129,7 @@ public class GoogleAuthService {
                 .provider("GOOGLE")
                 .picture(googleUserInfo.getPicture())
                 .role("USER") // Por defecto es USER
-                .password(null) // No tiene password local
+                .password(passwordEncoder.encode(randomPassword)) // Password aleatorio encriptado
                 .enable(true) // Usuarios de Google están verificados
                 .build();
 
